@@ -7,13 +7,14 @@
 
    //use(m5-0.1)   // uncomment to use M5 macro library.
 \SV
-   module <modulename> (
-    input x, y,
-    output z
+   // Quartus does not like the name 4bitadder.
+   module 4bitadder (
+    input in1[4:0], in2[4:0],
+    output result[5:0]
    );
 
 \TLV
-   // Add code here.
+   $result = $in1 + $in2;
    
 \SV
    endmodule

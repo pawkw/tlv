@@ -1,0 +1,184 @@
+Runs M5 and SandPiper as required based on file-type line.
+The file-type line is the first line of the file and should start with:
+        "\m5_TLV_version" to utilize M5 prior to SandPiper, or
+        "\TLV_version" to utilize only SandPiper, or
+        neither of the above for a pure SV file.
+
+For M5 usage, note that TLV library file inclusion is permitted within/below the current
+        working directory or within/below the last "." or ".." in the input file path.
+Usage: /home/app/sandpiper/bin/sandpiper [--help] -i <tlv-[m5-]in-file> -o <sv-out-file> [--read-only] [--m5inc <m5-incl-path1> [--m5inc ...]] [--m5out <m5-out-file>] [--verbose] [--no-color] [--debug] [--fmtNoSource] [--pass <passing-exit-status>] [<sandpiper-args>] [<tlv-[m5-]in-file> <sv-out-file>]
+        -i <tlv-[m5-]in-file>: TLV input file.
+        -o <tlv-out-file>: SV output file.
+        --tlv: Error if the file is not recognized as a TLV (or M5 TLV) file.
+        --read-only: Generated files will be read-only.
+        --m5inc <path>: Provide one include path for M5 (in addition to standard SandPiper M5 include path.
+        --m5out <file>: Output file for M5 run, if M5 is run. (Alternately, use --obj)
+        --m5def <name>=<value>: Defines M5 macro <name> assigned to <value> for M5 preprocessing.
+        --webcache <dir>: Directory where cached URL include files are stored (can be shared across runs).
+        --obj <dir>: Directory where intermediate files can be written. Directory will be created if it doesn't exist.
+        --fmtNoSource: Do not generate \source tags for correlating pre- and post-M5 code.
+        --pass <status>: Determines the exit status of this script from the exit status of sandpiper.
+                        SandPiper status at or below this value returns a zero status, otherwise the exit status from sandpiper is returned.
+        --verbose: Prints extra debug information.
+        --no-color: Disables colored output.
+        --debug: Creates intermediate files for M5 preprocessing.
+        <sandpiper-args>: Arguments that are passed through to the raw (no-M5) SandPiper ("java -jar sandpiper.jar -h").
+                --bestsv                 Optimize the readability/maintainability of the       
+                                           generated SV, unconstrained by correlation w/ TLV   
+                                           source.                                             
+                --clkAlways              Use a clocking strategy for deasserted 'when'         
+                                           conditions (vs. clkGate and clkEnable) in which all 
+                                           sequential elements use an always-enabled clock     
+                                           with no clock gating or clock enabling.  Thus, no   
+                                           power is saved from clock distribution and avoided  
+                                           logic propagation.  State signal values are held    
+                                           using explicit recirculation.                       
+                --clkEnable              Use a clocking strategy for deasserted 'when'         
+                                           conditions (vs. clkGate and clkAlways) in which     
+                                           'when' conditions are applied as clock enables to   
+                                           staging flip-flops.  (The condition is not applied  
+                                           to latches.)  It is generally recommended to use    
+                                           this in combination with --clkStageAlways.          
+                                           Explicit recirculation of state is produced only    
+                                           when state is consumed in the cycle that the next   
+                                           state value is produced (including --debugSigs*     
+                                           modes).  This overrides --clkAlways.                
+                --clkGate                Use a clocking strategy for deasserted 'when'         
+                                           conditions (vs. clkEnable and clkAlways) in which   
+                                           gated clock signals are provided to sequential      
+                                           elements.  Power is saved in clock distribution and 
+                                           by avoiding the propagation of unused values.       
+                                           Explicit recirculation of state is produced only    
+                                           when state is consumed in the cycle that the next   
+                                           state value is produced (including --debugSigs*     
+                                           modes).  This is the default and takes precedence   
+                                           over the other two --clk* flags.                    
+                --clkStageAlways         Modify the gating or enabling clocking strategy for   
+                                           'when' conditions such that gating/enabling is      
+                                           applied only to the first flip-flop after each      
+                                           assignment with subsequent staging using the free-  
+                                           running clock.  This strategy can reduce area for   
+                                           gating/enabling while still saving dynamic power by 
+                                           avoiding the propagation of unused values.  Less    
+                                           power may be saved in clock distribution.           
+                --compiler               The HDL compiler for which to tune generated HDL.     
+                                           Legal values are: "vcs", "modelsim", and            
+                                           "verilator".                                        
+                --conversion             Optimize output to support manual conversion for      
+                                           Verilog/SystemVerilog.  Pipesignals can be mixed    
+                                           case, and (project-specific) SV signal name mapping 
+                                           should be optimized to preserve pipesignal names.   
+                --debugSigs              Generate HDL signals orginized for optimal debug.     
+                                           These signals are copies of the "real" ones, with   
+                                           one signal per pipesignal (per replicated context), 
+                                           organized by hierarchy, pipeline, 'when'            
+                                           conditions, and pipestage.                          
+                --debugSigsGtkwave       An alternate (or addition) to --debugSigs, but        
+                                           avoiding bugs with GTKWave.                         
+                --debugSigsYosys         An alternate (or addition) to --debugSigs, but        
+                                           avoiding bugs and appropriate for use with Yosys.   
+                --fmtDeclSingleton       Each HDL signal is declared in its own declaration    
+                                           statement with its own type specification.          
+                --fmtDeclUnifiedHier     [Not yet supported.] Declare signals in a unified     
+                                           design hierarchy in the generated file, as opposed  
+                                           to inline with scope lines in the translated file.  
+                                           (No impact if --fmtFlatSignals.)                    
+                --fmtEscapedNames        Use escaped HDL names that resemble TLV names as      
+                                           closely as possible.                                
+                --fmtFlatSignals         Declare signals at the top level scope in the         
+                                           generated file, and do not use hierarchical signal  
+                                           references.                                         
+                --fmtFullHdlHier         Provide HDL hierarchy for all scopes, including non-  
+                                           replicated scopes.                                  
+                --fmtInlineInjection     Provide X-injection and state recirculation for       
+                                           assignments under 'when' conditions in the          
+                                           assignment expressions themself where possible,     
+                                           rather than in separate manufactured assignments.   
+                --fmtNoRespace           Preserve whitespace in HDL expressions as is.  Do not 
+                                           adjust whitespace to preserve alignment of elements 
+                                           and comments of the expression.                     
+                --fmtPack <Integer>      Generate HDL signals as packed to the given number of 
+                                           levels of hierarchy.  (Overruled by --fmtPackAll.)  
+                                           (default: 0)                                        
+                --fmtPackAll             Generate HDL signals as packed at all levels of       
+                                           hierarchy.  Also, forces behavior of --             
+                                           fmtFlatSignals.                                     
+                --fmtPackBooleans        Pack an additional level of hierarchy for boolean HDL 
+                                           signals.                                            
+                --fmtStripUniquifiers    Eliminate the use of uniquifiers in HDL names where   
+                                           possible.                                           
+                --fmtUseGenerate         Use the generate/endgenerate keywords that are        
+                                           optional in SystemVerilog.                          
+                -h, --help               Show help.                                            
+                --hdl                    The extended and target hardware description          
+                                           language.  One of: 'verilog', 'sv'.  This argument  
+                                           is implicit if a project (--p) argument is given.   
+                                           (default: sv)                                       
+                -i                       Input TL-X file (with absolute or relative path).     
+                                           (See also, --basename.)                             
+                --iArgs                  Process command-line arguments provided in the source 
+                                           file.  This option is unsupported.                  
+                --inlineGen              Produce the generated code in an inline code block    
+                                           within the translated code, rather than in a        
+                                           separate file.                                      
+                --license                Can be used to downgrade the license permissions as   
+                                           instructed by Redwood EDA, LLC.                     
+                --licenseFile            A file path to license key file against which to run, 
+                                           specified relative to the distribution directory,   
+                                           or as a full path.                                  
+                --noDirectiveComments    For strict adherence to the Verilog specification, do 
+                                           not output comments on `line and `include lines.    
+                                           Most Verilog parsers are okay with comments, but    
+                                           this is enabled automatically for --compiler        
+                                           modelsim due to unpredictable parsing errors.       
+                --noline                 Disable `line directive in SV output.                 
+                --nopath                 Disable output of the path to the distribution        
+                                           directory.  This can be useful if consistent output 
+                                           is required by different distributions.             
+                -o                       Produce the given translated HDL file (where the HDL  
+                                           language is determined from the project (-p) arg).  
+                                           File is specified as an absolute path or a path     
+                                           relative to the current directory, or --outdir, if  
+                                           given.  If a path ending in "/" or no/empty arg is  
+                                           given, the file name is derived from --basename or -
+                                           i.  A value of "STDOUT" may also be used.           
+                --outdir                 A root directory for all produced files as a relative 
+                                           or absolute path.                                   
+                -p                       Project name, corresponding to project configuration  
+                                           directory (e.g. -p verilog). (default: default)     
+                --randomUnassigned       Provide random stimulus to unassigned signals (using  
+                                           Verilog $random()).                                 
+                --reset0                 Applies *reset signal to all flip-flops, resetting    
+                                           them to zero values.  This applies only to projects 
+                                           that leave the flop definition to SandPiper and for 
+                                           flops that would not be otherwise reset.  Reset is  
+                                           not applied to latches. This supports teams with    
+                                           such a reset methodology, but is a bit counter to   
+                                           TL-Verilog timing abstraction.  This flag has a     
+                                           functional impact that may be incompatible with     
+                                           library components.                                 
+                --scrub                  Produce the given scrubbed TL-X file (specified as    
+                                           with -o arg).  The scrubbed file is a canonical TL- 
+                                           X representation of SandPiper's interpretation of   
+                                           the model.  For a well-formetted, warning-free      
+                                           source file, this file should be identical.         
+                --time                   Report program runtime to STDOUT.  (Note, this makes  
+                                           output unique w/ each run.)                         
+                --verbose                Verbose output for debug.                             
+                --xclk                   Enable X-injection on the clock when clock            
+                                           gating/enabling logic is generated according to --  
+                                           clk* parameters.  Specifically, drive X, rather     
+                                           than zero, on the clock gate or clock enable signal 
+                                           for deasserted 'when' conditions.                   
+                --xinj                   Enable X-injection at pipesignal assignment           
+                                           statements (those with deasserted 'when'            
+                                           conditions).  Supported for SystemVerilog only.     
+
+                Command-line formatting is flexible. For example, the following are equivalent:
+                        java -jar /home/app/sandpiper/target/sandpiper.jar -i in/path/dut.tlv -o ../out/dut.sv --html ../out/dut.html
+                        java -jar /home/app/sandpiper/target/sandpiper.jar -i=in/path/dut.tlv --outidr=../out -o -html
+                (The latter, using "=", is preferred.)
+
+                Exit status reflects the highest-severity error message.
+                Details about status codes is available using "--help=errors".
+Non-zero status indicates failure. Failures from SandPiper return that status. Other failures return status of greater than 100 (decimal).
